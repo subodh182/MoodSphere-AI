@@ -11,6 +11,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebase/config';
 
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
