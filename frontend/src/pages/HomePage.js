@@ -6,6 +6,7 @@ import MoodDashboard from '../components/Mood/MoodDashboard';
 import WeatherBanner from '../components/Mood/WeatherBanner';
 import MoodHistory from '../components/Mood/MoodHistory';
 import AIChat from '../components/Mood/AIChat';
+import MoodMusic from '../components/Mood/MoodMusic';
 import MoodGraph from '../components/Mood/MoodGraph';
 import Footer from '../components/Shared/Footer';
 import './HomePage.css';
@@ -98,6 +99,12 @@ export default function HomePage() {
 
       {/* Bottom sections */}
       <div className="container home-bottom">
+
+        {/* 🎵 Mood Music Player */}
+        {selectedMood && (
+          <MoodMusic mood={selectedMood} />
+        )}
+
         <div className="home-bottom-grid">
           {/* Session history */}
           {sessionHistory.length > 0 && (
