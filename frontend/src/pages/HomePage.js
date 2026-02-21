@@ -144,9 +144,15 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Bottom — only logged in */}
+      {/* Bottom — only logged in users */}
       {user && (
         <div className="container home-bottom">
+
+          {/* 🎵 Mood Music Player */}
+          {selectedMood && (
+            <MoodMusic mood={selectedMood} />
+          )}
+
           <div className="home-bottom-grid">
             {sessionHistory.length > 0 && (
               <MoodHistory sessionHistory={sessionHistory} userHistory={userProfile?.moodHistory} />
@@ -155,6 +161,7 @@ export default function HomePage() {
               <MoodGraph history={userProfile?.moodHistory || sessionHistory} />
             )}
           </div>
+
           {selectedMood && (
             <AIChat
               mood={selectedMood}
