@@ -9,6 +9,7 @@ import AIChat from '../components/Mood/AIChat';
 import MoodMusic from '../components/Mood/MoodMusic';
 import MoodGraph from '../components/Mood/MoodGraph';
 import Footer from '../components/Shared/Footer';
+import LoginGate from '../components/Auth/LoginGate';
 import './HomePage.css';
 
 const API_BASE = process.env.REACT_APP_API_URL || '';
@@ -21,6 +22,8 @@ export default function HomePage() {
   const [counters, setCounters] = useState({});
   const [sessionHistory, setSessionHistory] = useState([]);
   const [greeting, setGreeting] = useState('');
+  const [showLoginGate, setShowLoginGate] = useState(false);
+  const [pendingMood, setPendingMood] = useState(null);
   const { updateMoodHistory } = useAuth() || {};
 
   useEffect(() => {
@@ -32,14 +35,35 @@ export default function HomePage() {
     fetchCounters();
   }, []);
 
+  // User login ho gaya aur pending mood hai — automatically load karo
+  useEffect(() => {
+    if (user && pendingMood) {
+      setShowLoginGate(false);
+      loadMoodContent(pendingMood);
+      setPendingMood(null);
+    }
+  }, [user]);
+
   const fetchCounters = async () => {
     try {
       const res = await axios.get(`${API_BASE}/api/counters`);
       setCounters(res.data);
-    } catch { setCounters({ bored: 1247, sad: 834, productive: 2156, relaxed: 1089, confused: 673, anxious: 421, excited: 987 }); }
+    } catch {
+      setCounters({ bored: 1247, sad: 834, productive: 2156, relaxed: 1089, confused: 673, anxious: 421, excited: 987 });
+    }
   };
 
-  const handleMoodSelect = async (mood) => {
+  // Mood select hone pe — login check
+  const handleMoodSelect = (mood) => {
+    if (!user) {
+      setPendingMood(mood);
+      setShowLoginGate(true);
+      return;
+    }
+    loadMoodContent(mood);
+  };
+
+  const loadMoodContent = async (mood) => {
     setLoading(true);
     setSelectedMood(mood);
     playSound();
@@ -50,7 +74,10 @@ export default function HomePage() {
       ]);
       setMoodContent(res.data);
       setCounters(p => ({ ...p, [mood]: (p[mood] || 0) + 1 }));
-      setSessionHistory(p => [{ mood, time: new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) }, ...p].slice(0, 8));
+      setSessionHistory(p => [
+        { mood, time: new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' }) },
+        ...p
+      ].slice(0, 8));
       if (updateMoodHistory) updateMoodHistory(mood);
     } catch {
       setMoodContent(fallback(mood));
@@ -58,11 +85,24 @@ export default function HomePage() {
     setLoading(false);
   };
 
-  const handleReset = () => { setSelectedMood(null); setMoodContent(null); };
+  const handleReset = () => {
+    setSelectedMood(null);
+    setMoodContent(null);
+  };
+
+  const handleGateClose = () => {
+    setShowLoginGate(false);
+    setPendingMood(null);
+  };
 
   return (
     <div className="home-page">
-      {/* Hero / top bar */}
+      {/* Login Gate Modal */}
+      {showLoginGate && (
+        <LoginGate mood={pendingMood} onClose={handleGateClose} />
+      )}
+
+      {/* Hero */}
       <div className="home-hero">
         <div className="container">
           <div className="hero-greeting">
@@ -70,14 +110,16 @@ export default function HomePage() {
             {user && userProfile && (
               <span className="user-welcome badge">
                 👋 Welcome back, <strong>{userProfile.displayName?.split(' ')[0]}!</strong>
-                {userProfile.streak > 0 && <span className="streak-pill">🔥 {userProfile.streak} day streak</span>}
+                {userProfile.streak > 0 && (
+                  <span className="streak-pill">🔥 {userProfile.streak} day streak</span>
+                )}
               </span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Weather suggestion */}
+      {/* Weather */}
       <div className="container">
         <WeatherBanner onMoodSuggest={handleMoodSelect} />
       </div>
@@ -90,38 +132,37 @@ export default function HomePage() {
           <div className="mood-loading">
             <div className="mood-loading-emoji">✨</div>
             <p>Tera mood samajh raha hoon...</p>
-            <div className="loading-dots"><span/><span/><span/></div>
+            <div className="loading-dots"><span /><span /><span /></div>
           </div>
         ) : (
-          <MoodDashboard mood={selectedMood} content={moodContent} counter={counters[selectedMood]} onReset={handleReset} />
+          <MoodDashboard
+            mood={selectedMood}
+            content={moodContent}
+            counter={counters[selectedMood]}
+            onReset={handleReset}
+          />
         )}
       </div>
 
-      {/* Bottom sections */}
-      <div className="container home-bottom">
-
-        {/* 🎵 Mood Music Player */}
-        {selectedMood && (
-          <MoodMusic mood={selectedMood} />
-        )}
-
-        <div className="home-bottom-grid">
-          {/* Session history */}
-          {sessionHistory.length > 0 && (
-            <MoodHistory sessionHistory={sessionHistory} userHistory={userProfile?.moodHistory} />
-          )}
-
-          {/* Mood graph */}
-          {(sessionHistory.length > 1 || (userProfile?.moodHistory?.length > 1)) && (
-            <MoodGraph history={userProfile?.moodHistory || sessionHistory} />
+      {/* Bottom — only logged in */}
+      {user && (
+        <div className="container home-bottom">
+          <div className="home-bottom-grid">
+            {sessionHistory.length > 0 && (
+              <MoodHistory sessionHistory={sessionHistory} userHistory={userProfile?.moodHistory} />
+            )}
+            {(sessionHistory.length > 1 || userProfile?.moodHistory?.length > 1) && (
+              <MoodGraph history={userProfile?.moodHistory || sessionHistory} />
+            )}
+          </div>
+          {selectedMood && (
+            <AIChat
+              mood={selectedMood}
+              userName={userProfile?.displayName || user?.displayName || 'Yaar'}
+            />
           )}
         </div>
-
-        {/* AI Chat */}
-        {selectedMood && (
-          <AIChat mood={selectedMood} userName={userProfile?.displayName || user?.displayName || 'Yaar'} />
-        )}
-      </div>
+      )}
 
       <div className="container"><Footer /></div>
     </div>
@@ -142,11 +183,11 @@ const playSound = () => {
 };
 
 const fallback = (mood) => ({
-  bored: { emoji: '😴', color: '#FF6B6B', title: 'Bored Ho?', assistantMsg: "Chal kuch mast karte hain! 🎯", dos: ["Game khel!","Dost ko call!","Kuch naya seek!"], donts: ["Reels mat!","Fridge mat!","Episode mat!"], content: { links: [{ label: "2048 🎮", url: "https://play2048.co/", icon: "🎮" }] }, randomFact: "Boredom se creativity badhti hai!", randomQuote: { text: "Curiosity kills boredom!", author: "Unknown" }, counter: 1247 },
-  sad: { emoji: '😢', color: '#74B9FF', title: 'Sad Ho?', assistantMsg: "Sab theek hoga! 💙", dos: ["Paani pi!","Bahar jao!","Text karo!"], donts: ["Sad songs mat!","Social media mat!","Akele mat!"], content: { links: [{ label: "Cute Animals 🐾", url: "https://reddit.com/r/aww", icon: "🐾" }] }, randomFact: "Sad hona normal hai!", randomQuote: { text: "This too shall pass.", author: "Unknown" }, counter: 834 },
-  productive: { emoji: '⚡', color: '#00B894', title: 'Productive!', assistantMsg: "Aaj ka din tera hai! ⚡", dos: ["25 min focus!","Important pehle!","Goal likh!"], donts: ["Instagram mat!","Multitask mat!","Meeting mat!"], content: { links: [{ label: "Coursera 📚", url: "https://coursera.org", icon: "📚" }] }, randomFact: "Flow mein dopamine!", randomQuote: { text: "Done > Perfect.", author: "Sandberg" }, counter: 2156 },
-  relaxed: { emoji: '😌', color: '#FDCB6E', title: 'Relax!', assistantMsg: "Enjoy kar! 🌸", dos: ["Chai!","Book!","Stretch!"], donts: ["Guilt mat!","Decision mat!","Screen mat!"], content: { links: [{ label: "Lo-fi 🎧", url: "https://youtube.com/watch?v=jfKfPfyJRdk", icon: "🎧" }] }, randomFact: "Relaxation = productivity!", randomQuote: { text: "Rest is productive.", author: "Unknown" }, counter: 1089 },
-  confused: { emoji: '🤔', color: '#A29BFE', title: 'Confused?', assistantMsg: "Flow kar bhai! 🎲", dos: ["5 min ruko!","Random try!","Khud se pucho!"], donts: ["Overthink mat!","Opinion mat maango!","Force mat!"], content: { links: [{ label: "Random Wiki 🌍", url: "https://en.wikipedia.org/wiki/Special:Random", icon: "🌍" }] }, randomFact: "Confusion = creativity!", randomQuote: { text: "Not all who wander are lost.", author: "Tolkien" }, counter: 673 },
-  anxious: { emoji: '😰', color: '#FD79A8', title: 'Anxious?', assistantMsg: "Breathe kar, main hoon! 💗", dos: ["4-7-8 breathing!","5 senses engage!","Kisi ko call!"], donts: ["Caffeine mat!","Worst case mat soch!","News mat dekh!"], content: { links: [{ label: "Breathing 🧘", url: "https://calm.com/breathe", icon: "🧘" }] }, randomFact: "Deep breathing vagus nerve activate karta hai!", randomQuote: { text: "You are braver than you believe.", author: "Milne" }, counter: 421 },
-  excited: { emoji: '🤩', color: '#FFD93D', title: 'Excited!', assistantMsg: "WOHOO! Channel it bhai! 🤩", dos: ["Creative project!","Share karo!","Journal karo!"], donts: ["Impulsive mat!","Jaag mat!","Overpromise mat!"], content: { links: [{ label: "Product Hunt 🚀", url: "https://producthunt.com", icon: "🚀" }] }, randomFact: "Excitement aur anxiety same pathway!", randomQuote: { text: "Life is a daring adventure.", author: "Keller" }, counter: 987 },
+  bored: { emoji: '😴', color: '#FF6B6B', title: 'Bored Ho?', assistantMsg: "Chal kuch mast karte hain! 🎯", dos: ["Game khel!", "Dost ko call!", "Kuch naya seek!"], donts: ["Reels mat!", "Fridge mat!", "Episode mat!"], content: { links: [{ label: "2048 🎮", url: "https://play2048.co/", icon: "🎮" }] }, randomFact: "Boredom se creativity badhti hai!", randomQuote: { text: "Curiosity kills boredom!", author: "Unknown" }, counter: 1247 },
+  sad: { emoji: '😢', color: '#74B9FF', title: 'Sad Ho?', assistantMsg: "Sab theek hoga! 💙", dos: ["Paani pi!", "Bahar jao!", "Text karo!"], donts: ["Sad songs mat!", "Social media mat!", "Akele mat!"], content: { links: [{ label: "Cute Animals 🐾", url: "https://reddit.com/r/aww", icon: "🐾" }] }, randomFact: "Sad hona normal hai!", randomQuote: { text: "This too shall pass.", author: "Unknown" }, counter: 834 },
+  productive: { emoji: '⚡', color: '#00B894', title: 'Productive!', assistantMsg: "Aaj ka din tera hai! ⚡", dos: ["25 min focus!", "Important pehle!", "Goal likh!"], donts: ["Instagram mat!", "Multitask mat!", "Meeting mat!"], content: { links: [{ label: "Coursera 📚", url: "https://coursera.org", icon: "📚" }] }, randomFact: "Flow mein dopamine!", randomQuote: { text: "Done > Perfect.", author: "Sandberg" }, counter: 2156 },
+  relaxed: { emoji: '😌', color: '#FDCB6E', title: 'Relax!', assistantMsg: "Enjoy kar! 🌸", dos: ["Chai!", "Book!", "Stretch!"], donts: ["Guilt mat!", "Decision mat!", "Screen mat!"], content: { links: [{ label: "Lo-fi 🎧", url: "https://youtube.com/watch?v=jfKfPfyJRdk", icon: "🎧" }] }, randomFact: "Relaxation = productivity!", randomQuote: { text: "Rest is productive.", author: "Unknown" }, counter: 1089 },
+  confused: { emoji: '🤔', color: '#A29BFE', title: 'Confused?', assistantMsg: "Flow kar bhai! 🎲", dos: ["5 min ruko!", "Random try!", "Khud se pucho!"], donts: ["Overthink mat!", "Opinion mat maango!", "Force mat!"], content: { links: [{ label: "Random Wiki 🌍", url: "https://en.wikipedia.org/wiki/Special:Random", icon: "🌍" }] }, randomFact: "Confusion = creativity!", randomQuote: { text: "Not all who wander are lost.", author: "Tolkien" }, counter: 673 },
+  anxious: { emoji: '😰', color: '#FD79A8', title: 'Anxious?', assistantMsg: "Breathe kar, main hoon! 💗", dos: ["4-7-8 breathing!", "5 senses engage!", "Kisi ko call!"], donts: ["Caffeine mat!", "Worst case mat soch!", "News mat dekh!"], content: { links: [{ label: "Breathing 🧘", url: "https://calm.com/breathe", icon: "🧘" }] }, randomFact: "Deep breathing vagus nerve activate karta hai!", randomQuote: { text: "You are braver than you believe.", author: "Milne" }, counter: 421 },
+  excited: { emoji: '🤩', color: '#FFD93D', title: 'Excited!', assistantMsg: "WOHOO! Channel it bhai! 🤩", dos: ["Creative project!", "Share karo!", "Journal karo!"], donts: ["Impulsive mat!", "Jaag mat!", "Overpromise mat!"], content: { links: [{ label: "Product Hunt 🚀", url: "https://producthunt.com", icon: "🚀" }] }, randomFact: "Excitement aur anxiety same pathway!", randomQuote: { text: "Life is a daring adventure.", author: "Keller" }, counter: 987 },
 }[mood] || { emoji: '😴', color: '#FF6B6B', title: 'Mood Check!', assistantMsg: "Chal explore karte hain!", dos: ["Kuch try karo!"], donts: ["Bore mat ho!"], content: { links: [] }, randomFact: "Har din ek naya mauka!", randomQuote: { text: "Just be.", author: "Unknown" }, counter: 0 });
