@@ -1,0 +1,183 @@
+/* ─── Overlay ─── */
+.gate-overlay {
+  position: fixed; inset: 0; z-index: 800;
+  background: rgba(0, 0, 0, 0.75);
+  -webkit-backdrop-filter: blur(10px); /* Safari/iOS support */
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.25s ease;
+}
+
+/* ─── Modal ─── */
+.gate-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-hover);
+  border-top: 3px solid var(--accent, #6c63ff);
+  border-radius: 28px;
+  padding: 28px 24px 24px;
+  max-width: 440px; width: 100%;
+  position: relative;
+  animation: bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column; gap: 18px;
+}
+
+/* Close */
+.gate-close {
+  position: absolute; top: 14px; right: 14px;
+  background: var(--badge-bg); border: none;
+  border-radius: 50%; width: 30px; height: 30px;
+  color: var(--text-muted); font-size: 0.82rem;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.gate-close:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+/* ─── Teaser ─── */
+.gate-teaser {
+  display: flex; align-items: center; gap: 16px;
+}
+.gate-emoji-wrap {
+  position: relative; flex-shrink: 0;
+}
+.gate-big-emoji {
+  font-size: 3.5rem; display: block;
+  animation: float-slow 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+.gate-emoji-glow {
+  position: absolute; inset: -12px;
+  background: var(--accent, #6c63ff);
+  opacity: 0.15; border-radius: 50%;
+  filter: blur(16px); pointer-events: none;
+}
+.gate-title {
+  font-family: 'Baloo 2', cursive;
+  font-size: 1.4rem; font-weight: 800;
+  color: var(--text-primary); line-height: 1.2;
+  margin-bottom: 4px;
+}
+.gate-sub {
+  font-size: 0.84rem; color: var(--text-muted);
+  font-weight: 600; line-height: 1.5;
+}
+
+/* ─── Features list ─── */
+.gate-features {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px; padding: 14px;
+}
+.gate-feature-item {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* ─── Choice ─── */
+.gate-choice {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.gate-google-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--badge-bg); border: 1.5px solid var(--border-hover);
+  border-radius: 12px; padding: 12px;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 0.92rem;
+  color: var(--text-primary); cursor: pointer; transition: all 0.25s;
+}
+.gate-google-btn:hover { background: var(--bg-card-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.gate-google-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gate-divider {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--text-muted); font-size: 0.78rem; font-weight: 700;
+}
+.gate-divider::before, .gate-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border-color);
+}
+
+.gate-auth-btns { display: flex; gap: 10px; }
+.gate-btn {
+  flex: 1; border-radius: 12px; padding: 11px;
+  font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.92rem;
+  cursor: pointer; transition: all 0.25s; text-align: center;
+}
+.gate-login-btn {
+  background: none; border: 2px solid;
+}
+.gate-login-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.gate-register-btn {
+  border: none; color: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.gate-register-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+.gate-skip {
+  text-align: center; font-size: 0.78rem;
+  color: var(--text-muted); font-weight: 600;
+}
+.gate-skip-btn {
+  background: none; border: none;
+  color: var(--text-secondary); font-weight: 800;
+  cursor: pointer; font-family: 'Nunito', sans-serif;
+  font-size: 0.78rem;
+}
+.gate-skip-btn:hover { color: var(--text-primary); text-decoration: underline; }
+
+/* ─── Forms ─── */
+.gate-form {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.gate-form-header {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Baloo 2', cursive; font-weight: 800;
+  font-size: 1rem; color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.gate-back-btn {
+  background: var(--badge-bg); border: 1px solid var(--border-color);
+  border-radius: 8px; padding: 4px 10px;
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--text-secondary); cursor: pointer;
+  font-family: 'Nunito', sans-serif; transition: all 0.2s;
+}
+.gate-back-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+.gate-pass-wrap { position: relative; }
+.gate-pass-wrap .input-field { padding-right: 44px; }
+.gate-show-pass {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; font-size: 1rem;
+}
+
+.gate-submit-btn {
+  width: 100%; padding: 13px; border: none; border-radius: 12px;
+  font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.98rem;
+  color: white; cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+.gate-submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.gate-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.gate-switch-text {
+  text-align: center; font-size: 0.8rem;
+  color: var(--text-muted); font-weight: 600;
+}
+.gate-switch-link {
+  background: none; border: none;
+  color: var(--accent, #6c63ff); font-weight: 800;
+  cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 0.8rem;
+}
+.gate-switch-link:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+  .gate-modal { padding: 22px 18px 20px; border-radius: 22px; }
+  .gate-features { grid-template-columns: 1fr; }
+  .gate-teaser { flex-direction: column; text-align: center; }
+  .gate-big-emoji { font-size: 3rem; }
+}
