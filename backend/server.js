@@ -4,9 +4,13 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
+// app.use(cors({ origin: process.env.FRONTEND_URL || '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }));
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 
 // ─── In-memory mood counters (no DB needed for counters) ───
@@ -141,15 +145,45 @@ const surpriseContent = [
 
 // ─── Routes ───
 
-app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Mood Internet API v2 chal raha hai! 🚀' }));
+// app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Mood Internet API v2 chal raha hai! 🚀' }));
+
+// app.get('/api/mood/:mood', (req, res) => {
+//   const { mood } = req.params;
+//   if (!moodData[mood]) return res.status(404).json({ error: 'Ye mood nahi milta bhai!' });
+//   const data = moodData[mood];
+//   const randomFact = data.facts[Math.floor(Math.random() * data.facts.length)];
+//   const randomQuote = data.quotes[Math.floor(Math.random() * data.quotes.length)];
+//   res.json({ ...data, randomFact, randomQuote, counter: moodCounters[mood] || 0 });
+// });
 
 app.get('/api/mood/:mood', (req, res) => {
-  const { mood } = req.params;
-  if (!moodData[mood]) return res.status(404).json({ error: 'Ye mood nahi milta bhai!' });
-  const data = moodData[mood];
-  const randomFact = data.facts[Math.floor(Math.random() * data.facts.length)];
-  const randomQuote = data.quotes[Math.floor(Math.random() * data.quotes.length)];
-  res.json({ ...data, randomFact, randomQuote, counter: moodCounters[mood] || 0 });
+  try {
+    const { mood } = req.params;
+
+    if (!moodData[mood]) {
+      return res.status(404).json({ error: 'Ye mood nahi milta bhai!' });
+    }
+
+    const data = moodData[mood];
+
+    const randomFact = data.facts?.length
+      ? data.facts[Math.floor(Math.random() * data.facts.length)]
+      : null;
+
+    const randomQuote = data.quotes?.length
+      ? data.quotes[Math.floor(Math.random() * data.quotes.length)]
+      : null;
+
+    res.json({
+      ...data,
+      randomFact,
+      randomQuote,
+      counter: moodCounters[mood] || 0
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 });
 
 app.post('/api/mood/:mood/count', (req, res) => {
@@ -236,5 +270,10 @@ app.get('/api/weather-mood', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`🚀 Mood Internet v2 Backend port ${PORT} pe chal raha hai!`));
+// app.listen(PORT, () => console.log(`🚀 Mood Internet v2 Backend port ${PORT} pe chal raha hai!`));
+app.use((err, req, res, next) => {
+  console.error("Global Error:", err);
+  res.status(500).json({ error: "Something went wrong" });
+});
+
 module.exports = app;
